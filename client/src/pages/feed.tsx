@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import axios from "axios";
 import { SAPIBase } from "../tools/api";
 import Header from "../components/header";
@@ -9,9 +9,15 @@ interface IAPIResponse  { _id: string, title: string, content: string, itemViewC
 const FeedPage = (props: {}) => {
   const [ LAPIResponse, setLAPIResponse ] = React.useState<IAPIResponse[]>([]);
   const [ NPostCount, setNPostCount ] = React.useState<number>(0);
+  const [ EditedId, setEditedId ] = React.useState<string>();
+  const [ Key, setKey ] = React.useState<number>();
+  const [ Edited, setEdited ] = React.useState<boolean>(false);
+  const [ EditedTitle, setEditedTitle ] = React.useState<string>();
+  const [ EditedContent, setEditedContent ] = React.useState<string>();
   const [ SNewPostTitle, setSNewPostTitle ] = React.useState<string>("");
   const [ SNewPostContent, setSNewPostContent ] = React.useState<string>("");
   const [ SSearchItem, setSSearchItem ] = React.useState<string>("");
+  const [ Body, setBody] = React.useState<JSX.Element[]>();
 
   React.useEffect( () => {
     let BComponentExited = false;
@@ -24,7 +30,7 @@ const FeedPage = (props: {}) => {
     };
     asyncFun().catch((e) => window.alert(`Error while running API Call: ${e}`));
     return () => { BComponentExited = true; }
-  }, [ NPostCount, SSearchItem ]);
+  }, [ NPostCount, SSearchItem]);
 
   const createNewPost = () => {
     const asyncFun = async () => {
@@ -45,39 +51,125 @@ const FeedPage = (props: {}) => {
     asyncFun().catch(e => window.alert(`AN ERROR OCCURED! ${e}`));
   }
 
-  return (
-    <div className="Feed">
-      <Header/>
-      <h2>Feed</h2>
-      <div className={"feed-length-input"}>
-        Number of posts to show: &nbsp;&nbsp;
-        <input type={"number"} value={ NPostCount } id={"post-count-input"} min={0}
-               onChange={ (e) => setNPostCount( parseInt(e.target.value) ) }
-        />
-      </div>
-      <div className={"feed-length-input"}>
-        Search Keyword: &nbsp;&nbsp;
-        <input type={"text"} value={ SSearchItem } id={"post-search-input"}
-               onChange={ (e) => setSSearchItem( e.target.value ) }
-        />
-      </div>
-      <div className={"feed-list"}>
-        { LAPIResponse.map( (val, i) =>
-          <div key={i} className={"feed-item"}>
-            <div className={"delete-item"} onClick={(e) => deletePost(`${val._id}`)}>ⓧ</div>
-            <h3 className={"feed-title"}>{ val.title }</h3>
-            <p className={"feed-body"}>{ val.content }</p>
+  const editPost = (id: string, title: string, content: string, i:number) => {
+    setEditedId(id);
+    setKey(i);
+    setEditedTitle(title);
+    setEditedContent(content);
+    setEdited(true);
+  }
+
+  const editDonePost = ()=>{
+    
+    const asyncFun = async () => {
+      // One can set X-HTTP-Method header to DELETE to specify deletion as well
+      await axios.post( SAPIBase + '/feed/editFeed', { id: EditedId , title: EditedTitle, content: EditedContent} );
+    }
+    asyncFun().catch(e => window.alert(`AN ERROR OCCURED! ${e}`));
+    setEdited(false);
+  }
+
+  const afterEdit = ()=>{
+    setBody(
+      LAPIResponse.map( (val, i) =>
+        <div key={i} className={"feed-item"}>
+          <div className={"delete-item"} onClick={(e) => deletePost(`${val._id}`)}>ⓧ</div>
+          <div className={"edit-item"} onClick={(e) => editPost(`${val._id}`, `${val.title}`, `${val.content}`, i)}>EDIT</div>
+          <h3 className={"feed-title"}>{ val.title }</h3>
+          <p className={"feed-body"}>{ val.content }</p>
+        </div>
+      )
+    )
+  }
+
+  // setEdited(false);
+  // React.useEffect(afterEdit,[Edited])
+
+  if(Edited){
+    return (
+      <div className="Feed">
+        <Header/>
+        <h2>Feed</h2>
+        <div className={"feed-length-input"}>
+          Number of posts to show: &nbsp;&nbsp;
+          <input type={"number"} value={ NPostCount } id={"post-count-input"} min={0}
+                onChange={ (e) => setNPostCount( parseInt(e.target.value) ) }
+          />
+        </div>
+        <div className={"feed-length-input"}>
+          Search Keyword: &nbsp;&nbsp;
+          <input type={"text"} value={ SSearchItem } id={"post-search-input"}
+                onChange={ (e) => setSSearchItem( e.target.value ) }
+          />
+        </div>
+        <div className={"feed-list"}>
+          {
+            LAPIResponse.filter((val, i)=> ( i == Key)).map( (val,i) =>
+            <div className={"feed-item-edit"}>
+              <h4>How to edit?</h4>
+              Title: <input type={"text"} value={EditedTitle} onChange={(e) => setEditedTitle(e.target.value)}/>
+              &nbsp;&nbsp;&nbsp;&nbsp;
+              Content: <input type={"text"} value={EditedContent} onChange={(e) => setEditedContent(e.target.value)}/>
+              <div className={"post-add-button"} onClick={(e) => editDonePost()}>done</div>
+            </div>
+            )
+          }
+          { LAPIResponse.filter((val, i)=> ( i != Key)).map( (val, i) =>
+            <div key={i} className={"feed-item"}>
+              <div className={"delete-item"} onClick={(e) => deletePost(`${val._id}`)}>ⓧ</div>
+              <div className={"edit-item"} onClick={(e) => editPost(`${val._id}`, `${val.title}`, `${val.content}`, i)}>EDIT</div>
+              <h3 className={"feed-title"}>{ val.title }</h3>
+              <p className={"feed-body"}>{ val.content }</p>
+            </div>
+          ) }
+          <div className={"feed-item-add"}>
+            Title: <input type={"text"} value={SNewPostTitle} onChange={(e) => setSNewPostTitle(e.target.value)}/>
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            Content: <input type={"text"} value={SNewPostContent} onChange={(e) => setSNewPostContent(e.target.value)}/>
+            <div className={"post-add-button"} onClick={(e) => createNewPost()}>Add Post!</div>
           </div>
-        ) }
-        <div className={"feed-item-add"}>
-          Title: <input type={"text"} value={SNewPostTitle} onChange={(e) => setSNewPostTitle(e.target.value)}/>
-          &nbsp;&nbsp;&nbsp;&nbsp;
-          Content: <input type={"text"} value={SNewPostContent} onChange={(e) => setSNewPostContent(e.target.value)}/>
-          <div className={"post-add-button"} onClick={(e) => createNewPost()}>Add Post!</div>
         </div>
       </div>
-    </div>
-  );
+    );
+  }else{
+    return (
+      <div className="Feed">
+        <Header/>
+        <h2>Feed</h2>
+        <div className={"feed-length-input"}>
+          Number of posts to show: &nbsp;&nbsp;
+          <input type={"number"} value={ NPostCount } id={"post-count-input"} min={0}
+                onChange={ (e) => setNPostCount( parseInt(e.target.value) ) }
+          />
+        </div>
+        <div className={"feed-length-input"}>
+          Search Keyword: &nbsp;&nbsp;
+          <input type={"text"} value={ SSearchItem } id={"post-search-input"}
+                onChange={ (e) => setSSearchItem( e.target.value ) }
+          />
+        </div>
+        <div className={"feed-list"}>
+          {/* { Body } */}
+          { LAPIResponse.map( (val, i) =>
+            <div key={i} className={"feed-item"}>
+              <div className={"delete-item"} onClick={(e) => deletePost(`${val._id}`)}>ⓧ</div>
+              <div className={"edit-item"} onClick={(e) => editPost(`${val._id}`, `${val.title}`, `${val.content}`, i)}>EDIT</div>
+              <h3 className={"feed-title"}>{ val.title }</h3>
+              <p className={"feed-body"}>{ val.content }</p>
+            </div>
+          ) }
+          <div className={"feed-item-add"}>
+            Title: <input type={"text"} value={SNewPostTitle} onChange={(e) => setSNewPostTitle(e.target.value)}/>
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            Content: <input type={"text"} value={SNewPostContent} onChange={(e) => setSNewPostContent(e.target.value)}/>
+            <div className={"post-add-button"} onClick={(e) => createNewPost()}>Add Post!</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  
 }
 
 export default FeedPage;

@@ -54,6 +54,17 @@ class FeedDB {
             return false;
         }
     }
+
+    editItem = async ( id, edittitle, editcontent ) => {
+        try {
+            const OEditFiler = { _id: id };
+            const res = await FeedModel.updateOne(OEditFiler,{$set:{title: edittitle, content: editcontent}});
+            return true;
+        } catch (e) {
+            console.log(`[Feed-DB] Edit Error: ${ e }`);
+            return false;
+        }
+    }
 }
 
 const feedDBInst = FeedDB.getInst();
@@ -71,14 +82,14 @@ router.get('/getFeed', async (req, res) => {
 });
 
 router.post('/addFeed', async (req, res) => {
-   try {
-       const { title, content } = req.body;
-       const addResult = await feedDBInst.insertItem({ title, content });
-       if (!addResult) return res.status(500).json({ error: dbRes.data })
-       else return res.status(200).json({ isOK: true });
-   } catch (e) {
-       return res.status(500).json({ error: e });
-   }
+    try {
+        const { title, content } = req.body;
+        const addResult = await feedDBInst.insertItem({ title, content });
+        if (!addResult) return res.status(500).json({ error: dbRes.data })
+        else return res.status(200).json({ isOK: true });
+    } catch (e) {
+        return res.status(500).json({ error: e });
+    }
 });
 
 router.post('/deleteFeed', async (req, res) => {
@@ -90,6 +101,17 @@ router.post('/deleteFeed', async (req, res) => {
     } catch (e) {
         return res.status(500).json({ error: e });
     }
-})
+});
+
+router.post('/editFeed', async (req, res) => {
+    try {
+        const { id, title, content } = req.body;
+        const editResult = await feedDBInst.editItem(id, title, content);
+        if (!editResult) return res.status(500).json({ error: "No item edited" })
+        else return res.status(200).json({ isOK: true });
+    } catch (e) {
+        return res.status(500).json({ error: e });
+    }
+});
 
 module.exports = router;

@@ -41,5 +41,5 @@ mongoose.connect(process.env.MONGO_URI, OMongooseOption).then(
 );
 
 app.listen(port, () => {
-   console.log(`Example App Listening @ http://localhost:${ port }`);
+    console.log(`Example App Listening @ http://localhost:${ port }`);
 });
