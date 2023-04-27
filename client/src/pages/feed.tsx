@@ -32,6 +32,21 @@ const FeedPage = (props: {}) => {
     return () => { BComponentExited = true; }
   }, [ NPostCount, SSearchItem]);
 
+  const afterEdit = ()=>{
+    let BComponentExited = false;
+    const asyncFun = async () => {
+      const { data } = await axios.get<IAPIResponse[]>( SAPIBase + `/feed/getFeed?count=${ NPostCount }&search=${ SSearchItem }`);
+      console.log(data);
+      // const data = [ { id: 0, title: "test1", content: "Example body" }, { id: 1, title: "test2", content: "Example body" }, { id: 2, title: "test3", content: "Example body" } ].slice(0, NPostCount);
+      if (BComponentExited) return;
+      setLAPIResponse(data);
+    };
+    asyncFun().catch((e) => window.alert(`Error while running API Call: ${e}`));
+    return () => { BComponentExited = true; }
+  }
+
+  React.useEffect(afterEdit,[Edited])
+
   const createNewPost = () => {
     const asyncFun = async () => {
       await axios.post( SAPIBase + '/feed/addFeed', { title: SNewPostTitle, content: SNewPostContent } );
@@ -68,22 +83,6 @@ const FeedPage = (props: {}) => {
     asyncFun().catch(e => window.alert(`AN ERROR OCCURED! ${e}`));
     setEdited(false);
   }
-
-  const afterEdit = ()=>{
-    setBody(
-      LAPIResponse.map( (val, i) =>
-        <div key={i} className={"feed-item"}>
-          <div className={"delete-item"} onClick={(e) => deletePost(`${val._id}`)}>ⓧ</div>
-          <div className={"edit-item"} onClick={(e) => editPost(`${val._id}`, `${val.title}`, `${val.content}`, i)}>EDIT</div>
-          <h3 className={"feed-title"}>{ val.title }</h3>
-          <p className={"feed-body"}>{ val.content }</p>
-        </div>
-      )
-    )
-  }
-
-  // setEdited(false);
-  // React.useEffect(afterEdit,[Edited])
 
   if(Edited){
     return (
@@ -149,7 +148,6 @@ const FeedPage = (props: {}) => {
           />
         </div>
         <div className={"feed-list"}>
-          {/* { Body } */}
           { LAPIResponse.map( (val, i) =>
             <div key={i} className={"feed-item"}>
               <div className={"delete-item"} onClick={(e) => deletePost(`${val._id}`)}>ⓧ</div>
