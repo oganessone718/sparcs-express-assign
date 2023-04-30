@@ -74,6 +74,7 @@ router.get('/getFeed', async (req, res) => {
         const requestCount = parseInt(req.query.count);
         const searchString = req.query.search;
         const dbRes = await feedDBInst.selectItems(requestCount, searchString);
+        console.log(dbRes);
         if (dbRes.success) return res.status(200).json(dbRes.data);
         else return res.status(500).json({ error: dbRes.data })
     } catch (e) {

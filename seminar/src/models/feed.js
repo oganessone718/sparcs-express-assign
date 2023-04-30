@@ -1,6 +1,6 @@
-const mongoose = require("mongoose");
+var mongoose = require("mongoose");
 
-const OSchemaDefinition = {
+var OSchemaDefinition = {
     title: String,
     content: {
         type: String,
@@ -11,11 +11,11 @@ const OSchemaDefinition = {
         default: 0,
     }
 };
-const OSchemaOptions = { timestamps: true };
+var OSchemaOptions = { timestamps: true };
 
-const schema = new mongoose.Schema(OSchemaDefinition, OSchemaOptions);
+var schema = new mongoose.Schema(OSchemaDefinition, OSchemaOptions);
 
-const FeedModel = mongoose.model("feed", schema);
+var FeedModel = mongoose.model("account", schema);
 
 module.exports = FeedModel;
 
